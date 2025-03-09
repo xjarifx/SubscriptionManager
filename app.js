@@ -1,13 +1,15 @@
 import express from "express";
 import cookieParser from "cookie-parser";
-import PORT from "./config/env.js";
-import userRouter from "./routes/users.routers.js";
-import authRouter from "./routes/auth.routers.js";
-import subscriptionRouter from "./routes/subscriptions.routers.js";
+import { PORT } from "./config/env.js";
+import userRouter from "./routers/users.routers.js";
+import authRouter from "./routers/auth.routers.js";
+import subscriptionRouter from "./routers/subscriptions.routers.js";
 import connectDB from "./database/mongodb.js";
+import errorMiddleware from "./middlewares/error.middleware.js";
 
 const app = express();
 
+app.use(errorMiddleware());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
