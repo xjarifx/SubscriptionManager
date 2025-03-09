@@ -47,7 +47,6 @@ const subscriptionSchema = new mongoose.Schema(
     },
     renewalData: {
       type: true,
-      require: true,
       validate: {
         validator: function (value) {
           return value > this.startDate;
