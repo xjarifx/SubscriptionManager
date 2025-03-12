@@ -10,7 +10,14 @@ const signup = async (req, res, next) => {
 
   try {
     const { name, email, password } = req.body;
-    const existingUser = await User.findOne({ email });
+
+    if (!name || !email || !password) {
+      const error = new Error("Name, email, and password are required");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const existingUser = await User.findOne({ email }).session(session);
 
     if (existingUser) {
       const error = new Error("User already exists");
@@ -21,7 +28,30 @@ const signup = async (req, res, next) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // const newUser
+    const newUser = await User.create(
+      { name, email, password: hashedPassword },
+      { session }
+    );
+
+    const token = jwt.sign({ userId: newUser._id }, JWT_SECRET, {
+      expiresIn: JWT_EXPIRES_IN,
+    });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(201).json({
+      success: true,
+      message: "User created successfully",
+      date: {
+        token,
+        user: {
+          _id: newUser._id,
+          name: newUser.name,
+          email: newUser.email,
+        },
+      },
+    });
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
