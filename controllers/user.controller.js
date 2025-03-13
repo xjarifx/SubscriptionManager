@@ -19,7 +19,7 @@ const getUser = async (req, res, next) => {
       throw error;
     }
 
-    res.status(200).json({ success: true, data: user }).select("-password");
+    res.status(200).json({ success: true, data: user });
   } catch (e) {
     next(e);
   }

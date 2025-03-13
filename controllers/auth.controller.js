@@ -5,55 +5,51 @@ import User from "../models/user.model.js";
 import { JWT_SECRET, JWT_EXPIRES_IN } from "../config/env.js";
 
 const signup = async (req, res, next) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
     const { name, email, password } = req.body;
 
-    if (!name || !email || !password) {
-      const error = new Error("Name, email, and password are required");
-      error.statusCode = 400;
-      throw error;
-    }
-
-    const existingUser = await User.findOne({ email }).session(session);
-    if (existingUser) {
-      const error = new Error("User already exists");
-      error.statusCode = 409;
-      throw error;
-    }
-
+    // Hash the password before saving
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const newUser = await User.create(
-      { name, email, password: hashedPassword },
-      { session }
-    );
-
-    const token = jwt.sign({ userId: newUser._id }, JWT_SECRET, {
-      expiresIn: JWT_EXPIRES_IN,
+    // Create a new user with hashed password
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword,
     });
 
-    await session.commitTransaction();
-    session.endSession();
+    // Save the user to the database
+    const savedUser = await user.save();
+
+    // Return success response with user data (excluding password)
+    const userData = savedUser.toObject();
+    delete userData.password;
 
     res.status(201).json({
       success: true,
       message: "User created successfully",
-      data: {
-        token,
-        user: {
-          _id: newUser._id.toString(),
-          name: newUser.name,
-          email: newUser.email,
-        },
-      },
+      data: userData,
     });
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
+    // If it's a validation error, handle it appropriately
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((err) => err.message);
+      return res.status(400).json({
+        success: false,
+        error: messages.join(","),
+      });
+    }
+
+    // For duplicate key errors (e.g., duplicate email or username)
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        error: `${Object.keys(error.keyPattern)[0]} already exists`,
+      });
+    }
+
+    // For other errors, pass to error handler middleware
     next(error);
   }
 };
@@ -68,7 +64,8 @@ const signin = async (req, res, next) => {
       throw error;
     }
 
-    const user = await User.findOne({ email }).select("+password");
+    // Remove the select("+password") since password isn't excluded by default
+    const user = await User.findOne({ email });
     if (!user) {
       const error = new Error("Invalid email or password");
       error.statusCode = 401;
@@ -110,4 +107,4 @@ const signout = (req, res) => {
   });
 };
 
-export { signin, signup, signout };
+export { signup, signin, signout };
