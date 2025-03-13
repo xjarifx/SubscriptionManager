@@ -4,14 +4,14 @@ const subscriptionSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      require: [true, "sub name req"],
+      required: [true, "sub name req"],
       trim: true,
       minLength: 2,
       maxLength: 100,
     },
     price: {
       type: Number,
-      require: [true, "price req"],
+      required: [true, "price req"],
       min: [0, "price must greater than 0"],
     },
     currency: {
@@ -29,7 +29,7 @@ const subscriptionSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      require: true,
+      required: true,
       trim: true,
     },
     status: {
@@ -39,25 +39,25 @@ const subscriptionSchema = new mongoose.Schema(
     },
     startDate: {
       type: Date,
-      require: true,
+      required: true,
       validate: {
         validator: (value) => value <= new Date(),
-        msg: "starting date must be in the past",
+        message: "starting date must be in the past",
       },
     },
-    renewalData: {
-      type: true,
+    renewalDate: {
+      type: Date,
       validate: {
         validator: function (value) {
           return value > this.startDate;
         },
-        msg: "renewal date must be greater than start date",
+        message: "renewal date must be greater than start date",
       },
     },
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      require: true,
+      required: true,
       index: true,
     },
   },

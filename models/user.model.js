@@ -1,10 +1,10 @@
-import mongoose, { mongo } from "mongoose";
+import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
-    userName: {
+    name: {
       type: String,
-      require: [true, "user name required"],
+      required: [true, "name required"],
       minLength: 2,
       maxLength: 16,
       trim: true,
@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      require: [true, "Email required"],
+      required: [true, "Email required"],
       lowercase: true,
       trim: true,
       unique: true,
@@ -20,7 +20,7 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      require: [true, "password required"],
+      required: [true, "password required"],
       minLength: 8,
     },
   },

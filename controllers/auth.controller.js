@@ -45,7 +45,7 @@ const signup = async (req, res, next) => {
       data: {
         token,
         user: {
-          _id: newUser._id,
+          _id: newUser._id.toString(),
           name: newUser.name,
           email: newUser.email,
         },
@@ -92,7 +92,7 @@ const signin = async (req, res, next) => {
       data: {
         token,
         user: {
-          _id: user._id,
+          _id: user._id.toString(),
           name: user.name,
           email: user.email,
         },
