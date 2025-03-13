@@ -29,8 +29,8 @@ const errorMiddleware = (err, req, res, next) => {
       success: false,
       error: error.message || "Server Error",
     });
-  } catch (error) {
-    next(error);
+  } catch (e) {
+    next(e);
   }
 };
 
