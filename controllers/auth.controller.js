@@ -4,6 +4,16 @@ import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
 import { JWT_SECRET, JWT_EXPIRES_IN } from "../config/env.js";
 
+const validateEmail = (email) => {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(String(email).toLowerCase());
+};
+
+const validatePassword = (password) => {
+  const re = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
+  return re.test(password);
+};
+
 const signup = async (req, res, next) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -12,20 +22,28 @@ const signup = async (req, res, next) => {
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
-      const error = new Error("Name, email, and password are required");
-      error.statusCode = 400;
-      throw error;
+      throw new Error("Name, email, and password are required", {
+        statusCode: 400,
+      });
+    }
+
+    if (!validateEmail(email)) {
+      throw new Error("Invalid email format", { statusCode: 400 });
+    }
+
+    if (!validatePassword(password)) {
+      throw new Error(
+        "Password must be at least 8 characters with uppercase, lowercase, and number",
+        { statusCode: 400 }
+      );
     }
 
     const existingUser = await User.findOne({ email }).session(session);
-
     if (existingUser) {
-      const error = new Error("User already exists");
-      error.statusCode = 409;
-      throw error;
+      throw new Error("User already exists", { statusCode: 409 });
     }
 
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(parseInt(BCRYPT_SALT_ROUNDS));
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const newUser = await User.create(
@@ -43,7 +61,7 @@ const signup = async (req, res, next) => {
     res.status(201).json({
       success: true,
       message: "User created successfully",
-      date: {
+      data: {
         token,
         user: {
           _id: newUser._id,
@@ -64,25 +82,17 @@ const signin = async (req, res, next) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      const error = new Error("Provide credential");
-      error.statusCode = 404;
-      throw error;
+      throw new Error("Email and password are required", { statusCode: 400 });
     }
 
-    const user = await User.findOne({ email });
-
+    const user = await User.findOne({ email }).select("+password");
     if (!user) {
-      const error = new Error("invalid email or password");
-      error.statusCode = 401;
-      throw error;
+      throw new Error("Invalid email or password", { statusCode: 401 });
     }
 
     const isValidPassword = await bcrypt.compare(password, user.password);
-
     if (!isValidPassword) {
-      const error = new Error("invalid email or password");
-      error.statusCode = 401;
-      throw error;
+      throw new Error("Invalid email or password", { statusCode: 401 });
     }
 
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, {
@@ -91,7 +101,7 @@ const signin = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: "user signed in",
+      message: "User signed in successfully",
       data: {
         token,
         user: {
@@ -101,20 +111,16 @@ const signin = async (req, res, next) => {
         },
       },
     });
-  } catch (e) {
-    next(e);
+  } catch (error) {
+    next(error);
   }
 };
 
-const signout = (req, res, next) => {
-  try {
-    res.status(200).json({
-      success: true,
-      message: "Sign out successfully",
-    });
-  } catch (e) {
-    next(e);
-  }
+const signout = (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Sign out successful",
+  });
 };
 
 export { signin, signup, signout };
