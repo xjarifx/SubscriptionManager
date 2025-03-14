@@ -1,5 +1,4 @@
 import bcrypt from "bcryptjs";
-import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
 import { JWT_SECRET, JWT_EXPIRES_IN } from "../config/env.js";
@@ -25,6 +24,9 @@ const signup = async (req, res, next) => {
     res.status(201).json({
       success: true,
       message: "User created successfully",
+      token : jwt.sign({ userId: savedUser._id }, JWT_SECRET, {
+        expiresIn: JWT_EXPIRES_IN,
+      }),
       data: userData,
     });
   } catch (error) {

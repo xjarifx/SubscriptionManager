@@ -1,6 +1,9 @@
 import { Router } from "express";
+import authorize from "../middlewares/auth.middleware.js";
 
 const subscriptionRouter = Router();
+
+subscriptionRouter.use(authorize);
 
 subscriptionRouter.get("/", (req, res) => {
   res.send({ msg: "get all subs" });
