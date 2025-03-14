@@ -7,6 +7,13 @@ const signup = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
 
+    if(password.length < 6){
+      return res.status(400).json({
+        success: false,
+        error: "Password must be at least 6 characters",
+      });
+    }
+
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 

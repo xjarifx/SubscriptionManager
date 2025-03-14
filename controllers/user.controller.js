@@ -11,8 +11,6 @@ const getUsers = async (req, res, next) => {
 
 const getUser = async (req, res, next) => {
   try {
-    // Since we've already verified in the middleware that the user exists
-    // and has permission, we can simply return the user from req.user
     res.status(200).json({ success: true, data: req.user });
   } catch (e) {
     next(e);
