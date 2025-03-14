@@ -8,21 +8,17 @@ const signup = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
 
-    // Hash the password before saving
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Create a new user with hashed password
     const user = new User({
       name,
       email,
       password: hashedPassword,
     });
 
-    // Save the user to the database
     const savedUser = await user.save();
 
-    // Return success response with user data (excluding password)
     const userData = savedUser.toObject();
     delete userData.password;
 
@@ -32,7 +28,6 @@ const signup = async (req, res, next) => {
       data: userData,
     });
   } catch (error) {
-    // If it's a validation error, handle it appropriately
     if (error.name === "ValidationError") {
       const messages = Object.values(error.errors).map((err) => err.message);
       return res.status(400).json({
@@ -41,7 +36,6 @@ const signup = async (req, res, next) => {
       });
     }
 
-    // For duplicate key errors (e.g., duplicate email or username)
     if (error.code === 11000) {
       return res.status(400).json({
         success: false,
@@ -49,7 +43,6 @@ const signup = async (req, res, next) => {
       });
     }
 
-    // For other errors, pass to error handler middleware
     next(error);
   }
 };
@@ -64,7 +57,6 @@ const signin = async (req, res, next) => {
       throw error;
     }
 
-    // Remove the select("+password") since password isn't excluded by default
     const user = await User.findOne({ email });
     if (!user) {
       const error = new Error("Invalid email or password");
